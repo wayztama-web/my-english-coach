@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e2a23">
+<title>English Communication Coach V3.1 Hybrid</title>
+<style>
+:root{--bg:#0e2a23;--sf:#153a30;--sf2:#1f4d40;--tx:#eaf3ee;--mu:#9bb8ac;--ac:#f2c14e;--ok:#6fd1a5;--er:#ff8a7a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0 2px}
+.sub,.mu{color:var(--mu);font-size:14px}
+.sub{margin:0 0 8px}
+.tabs,.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tabs{margin:12px 0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--sf2);border:0;border-radius:10px;padding:10px 14px;cursor:pointer}
+button.pri,.tab.on{background:var(--ac);color:#1b1500;font-weight:600}
+button.on{outline:2px solid var(--er)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--sf2);border-radius:10px;padding:10px;margin-top:6px}
+.card{background:var(--sf);border-radius:14px;padding:14px;margin:12px 0}
+.bar{height:10px;background:var(--sf2);border-radius:5px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;width:100%;background:var(--ac);transform-origin:left}
+#aitx{font-size:19px}
+.bad{color:var(--er)}.good{color:var(--ok);font-size:18px}
+.warn{color:var(--ac)}
+.item{border-top:1px solid var(--sf2);padding:10px 0}
+.item:first-child{border-top:0}
+label.chk{display:flex;gap:8px;align-items:center;margin-top:12px}
+label.chk input{width:auto;margin:0}
+.livebox{border:1px solid var(--sf2);background:#102f27}.status{padding:10px;border-radius:10px;background:var(--bg);margin-top:10px}.modepick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.modepick button.on{background:var(--ac);color:#1b1500;font-weight:700}.helpgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:440px){.helpgrid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.bar i{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>English Communication Coach <span style="font-size:12px;color:var(--ac)">V3.1</span></h1>
+<p class="sub">Guided practice + Gemini Live. Speak, get help, correct, repeat, and keep going.</p>
+<div class="tabs">
+ <button class="tab on" data-t="p">Latihan</button>
+ <button class="tab" data-t="l">Catatan</button>
+ <button class="tab" data-t="s">Pengaturan</button>
+</div>
+<div id="msg" class="warn" role="status"></div>
+
+<section id="p">
+ <div class="card">
+  <label>Tema percakapan
+  <select id="sc" aria-label="Tema percakapan">
+   <option value="daily">Daily Life</option>
+   <option value="work">Workplace English</option>
+   <option value="roleplay">Role-play</option>
+   <option value="free">Free Talk</option>
+  </select></label>
+  <label>Topik
+  <select id="topic" aria-label="Topik percakapan"></select></label>
+  <label>Level
+  <select id="quickLevel"><option value="A1-A2 (beginner)">Beginner A1-A2</option><option value="A2-B1">Elementary A2-B1</option><option value="B1-B2">Intermediate B1-B2</option></select></label>
+  <div class="modepick"><button id="guidedMode" class="on">Guided Practice</button><button id="liveMode">Live Conversation</button></div>
+  <div class="row"><button class="pri" id="go">Mulai percakapan</button></div>
+ </div>
+ <div class="card livebox" id="livePanel" hidden>
+  <b>🎙️ Gemini Live Conversation</b>
+  <div class="mu">Percakapan suara kontinu. Tema, topik, level, dan aturan koreksi mengikuti pilihan di atas.</div>
+  <div class="row"><button class="pri" id="startLive">Start Live</button><button id="stopLive" disabled>Stop</button></div>
+  <div class="status" id="liveStatus">⚪ Not connected.</div>
+  <div class="row"><button id="liveMeaning">🇮🇩 Arti kalimat AI</button><button id="liveSlow">🐢 Ulangi perlahan</button><button id="pauseMic">⏸️ Pause mic</button></div>
+  <div id="liveTranscript" class="mu" style="margin-top:10px"></div>
+ </div>
+ <div class="card" id="ai" hidden>
+  <div id="aitx"></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div id="tm" class="mu"></div>
+  <div class="row"><button id="rp">🔊 Putar lagi</button><button id="shw">Tampilkan teks</button></div>
+ </div>
+ <div class="card" id="ac" hidden>
+  <textarea id="ans" rows="2" placeholder="Jawab dalam bahasa Inggris…"></textarea>
+  <div class="row"><button id="mic">🎙️ Bicara</button><button class="pri" id="snd">Kirim</button></div>
+ </div>
+ <div id="fix"></div>
+ <div class="card">
+  <b>💡 Tidak tahu cara mengatakannya?</b><div class="mu">Tulis kata atau maksud dalam bahasa Indonesia. Coach akan memberi kalimat natural, cara mengucapkan, dan vocabulary penting tanpa menghentikan topik.</div>
+  <input id="idn" placeholder="Tulis maksudmu dalam bahasa Indonesia…">
+  <div class="row"><button class="pri" id="how">Ajari cara bilangnya</button><button id="meaning">🇮🇩 Arti pertanyaan AI</button><button id="slow">🐢 Ulangi lebih lambat</button></div>
+  <div id="hw"></div>
+ </div>
+</section>
+
+<section id="l" hidden>
+ <div class="card" id="stats"></div>
+ <div class="card"><b>📚 Vocabulary & Sentence Notebook</b><div id="log"></div></div>
+</section>
+
+<section id="s" hidden>
+ <div class="card">
+  <label>Gemini API key<input id="k" type="password" autocomplete="off"></label>
+  <label>Model teks<input id="m"></label>
+  <label>Model Live<input id="lm" value="gemini-3.8-live"></label>
+  <label>Level utama<select id="lv"><option>A1-A2 (beginner)</option><option>A2-B1</option><option>B1-B2</option></select></label>
+  <label class="chk"><input type="checkbox" id="hd"> Sembunyikan teks AI (dengar dulu)</label>
+  <div class="row"><button class="pri" id="sv">Simpan</button></div>
+  <p class="mu">Key tersimpan hanya di browser ini. Jangan upload file ini ke GitHub dengan key di dalamnya. Mic memakai pengenalan suara browser (paling stabil di Chrome).</p>
+ </div>
+</section>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS={get:(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let cfg=Object.assign({key:'',model:'gemini-3.8-flash',level:'A1-A2 (beginner)',hide:true},LS.get('esc_cfg',{}));
+const TOPICS={
+ daily:[['morning','Morning routine'],['family','Family'],['food','Food and cooking'],['weekend','Weekend activities'],['shopping','Shopping'],['transport','Transportation'],['weather','Weather'],['health','Health and exercise'],['hobby','Hobbies'],['travel','Travel'],['plans','Plans for tomorrow'],['past','Past experiences']],
+ work:[['handover','Shift handover'],['target','Production target'],['downtime','Machine downtime'],['quality','Quality problem'],['safety','Safety briefing'],['coaching','Operator coaching'],['maintenance','Maintenance coordination'],['meeting','Daily production meeting'],['rootcause','Root cause analysis'],['improvement','Improvement project'],['manager','Reporting to manager'],['review','Management review']],
+ roleplay:[['boss','Talk to your manager'],['meeting','Lead a production meeting'],['breakdown','Explain a machine problem'],['complaint','Handle a quality complaint'],['instruction','Give instructions to an operator'],['audit','Respond during an audit'],['target','Discuss a missed target']],
+ free:[['ai','AI chooses the topic'],['mine','I choose the topic'],['continue','Continue the previous topic']]
+};
+let activeTopic='',pendingQuestion='',lastHelpSentence='',lastHelpWords=[];
+function fillTopics(){const type=$('#sc').value,list=TOPICS[type]||TOPICS.daily;$('#topic').innerHTML=list.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('');activeTopic=$('#topic').selectedOptions[0]?.text||''}
+function vocabLog(indonesian,english,words=[]){const L=LS.get('esc_vocab',[]),key=english.toLowerCase();if(!L.some(x=>x.english.toLowerCase()===key))L.unshift({indonesian,english,words,date:new Date().toISOString()});LS.set('esc_vocab',L.slice(0,300))}
+
+let hist=[],lastAI='',pending='',t0=0,gotLat=false,timer=null,rec=null,busy=false;
+const SC={daily:'Everyday small talk: morning, food, family, weekend.',
+work:'Workplace English. The learner is a production supervisor at a yarn twisting factory. Practice shift handover, machine downtime, quality problems, and reporting.',
+boss:'Role-play: you are the plant manager. Ask the supervisor for a short production report, then ask follow-up questions.',
+free:'Any topic the learner likes.'};
+
+function setMsg(t){$('#msg').textContent=t||''}
+function tab(t){document.querySelectorAll('section').forEach(s=>s.hidden=s.id!==t);document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(t==='l')renderLog();}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+
+function sys(){return `You are a friendly English speaking coach. The learner is an Indonesian speaker at level ${cfg.level}. Scenario: ${SC[$('#sc').value]}
+Rules: reply in simple spoken English, max 2 short sentences, end with one question. Never use Indonesian.
+Check the learner's last message. If there is one important error or unnatural phrase, return a fix. "better" MUST be the complete corrected version of the learner's whole message, a full natural spoken sentence the learner can say out loud, never a single word or fragment. If the learner only gave a word or a fragment, expand it into a full natural sentence. "why" names the changed part in max 12 simple English words. Only one fix. If it is fine, fix is null.
+If the learner message is exactly "Start the conversation.", open with a short friendly question and fix is null.
+Return only JSON: {"reply":"...","fix":{"said":"...","better":"...","why":"..."} or null}`}
+
+async function gem(system,contents){
+ const u=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent?key=${encodeURIComponent(cfg.key)}`;
+ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{responseMimeType:'application/json',temperature:.7}})});
+ const j=await r.json();
+ if(!r.ok)throw new Error(j.error&&j.error.message||r.status);
+ const t=((j.candidates||[])[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+ return JSON.parse(t.replace(/```json|```/g,'').trim());
+}
+
+function speak(t,cb){
+ if(!('speechSynthesis' in window)){cb&&cb();return}
+ speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.92;
+ const v=speechSynthesis.getVoices().find(v=>/^en[-_]US/i.test(v.lang));if(v)u.voice=v;
+ u.onend=()=>cb&&cb();u.onerror=()=>cb&&cb();
+ speechSynthesis.speak(u);
+}
+function stopRec(){if(rec){const r=rec;rec=null;r.onend=null;try{r.stop()}catch(e){}}$('#mic').classList.remove('on')}
+function listen(onText,onEnd){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){setMsg('Mic tidak didukung browser ini. Ketik jawabanmu.');onEnd&&onEnd();return}
+ stopRec();
+ const r=new SR();rec=r;r.lang='en-US';r.interimResults=true;r.continuous=false;
+ r.onresult=e=>{let s='';for(const x of e.results)s+=x[0].transcript;onText(s)};
+ r.onend=()=>{if(rec===r)rec=null;onEnd&&onEnd()};
+ r.onerror=()=>{};
+ try{r.start()}catch(e){}
+}
+function sim(a,b){const w=s=>s.toLowerCase().replace(/[^a-z' ]/g,'').split(/\s+/).filter(Boolean);const A=new Set(w(a)),B=w(b);return B.length?Math.round(B.filter(x=>A.has(x)).length/B.length*100):0}
+
+function setAI(t){
+ lastAI=t;$('#ai').hidden=false;$('#ac').hidden=false;
+ $('#aitx').textContent=cfg.hide?'Teks disembunyikan. Dengarkan dulu.':t;
+ $('#shw').hidden=!cfg.hide;
+ speak(t,startTurn);
+}
+function startTurn(){
+ t0=performance.now();gotLat=false;
+ const b=$('#bar');b.style.transition='none';b.style.transform='scaleX(1)';void b.offsetWidth;
+ b.style.transition='transform 5s linear';b.style.transform='scaleX(0)';
+ clearTimeout(timer);$('#tm').className='mu';$('#tm').textContent='Jawab sekarang. Jangan diterjemahkan.';
+ timer=setTimeout(()=>{if(!gotLat){$('#tm').className='warn';$('#tm').textContent='Lewat 5 detik. Jawab dengan kata apa pun yang kamu tahu.'}},5000);
+ micOn();
+}
+function micOn(){$('#mic').classList.add('on');listen(t=>{$('#ans').value=t;markLat()},()=>$('#mic').classList.remove('on'))}
+function markLat(){
+ if(gotLat||!$('#ans').value.trim())return;gotLat=true;clearTimeout(timer);
+ const s=+((performance.now()-t0)/1000).toFixed(1);
+ const st=LS.get('esc_st',{lat:[],n:0,fx:0});st.lat.push(s);st.lat=st.lat.slice(-100);LS.set('esc_st',st);
+ $('#tm').className='mu';$('#tm').textContent=`Mulai menjawab setelah ${s} detik.`;
+}
+
+async function start(){
+ if(!cfg.key){tab('s');return setMsg('Isi API key dulu.')}
+ if(busy)return;busy=true;stopRec();$('#fix').innerHTML='';setMsg('Menyiapkan…');
+ hist=[{role:'user',parts:[{text:'Start the conversation.'}]}];
+ try{const r=await gem(sys(),hist);hist.push({role:'model',parts:[{text:r.reply}]});setMsg('');setAI(r.reply)}
+ catch(e){setMsg('Gagal: '+e.message)}
+ busy=false;
+}
+async function send(){
+ const text=$('#ans').value.trim();if(!text||busy)return;
+ if(!hist.length)return setMsg('Tekan Mulai sesi dulu.');
+ busy=true;stopRec();clearTimeout(timer);if('speechSynthesis' in window)speechSynthesis.cancel();
+ hist.push({role:'user',parts:[{text}]});$('#ans').value='';setMsg('Memeriksa…');
+ try{
+  const r=await gem(sys(),hist);
+  hist.push({role:'model',parts:[{text:r.reply}]});setMsg('');
+  const st=LS.get('esc_st',{lat:[],n:0,fx:0});st.n++;
+  pending=r.reply;
+  if(r.fix&&r.fix.better){st.fx++;addLog(text,r.fix.better,r.fix.why||'');showFix(Object.assign({},r.fix,{said:text}))}
+  else{$('#fix').innerHTML='<div class="card good">Bagus. Tidak ada yang perlu diperbaiki.</div>';setAI(r.reply)}
+  LS.set('esc_st',st);
+ }catch(e){hist.pop();$('#ans').value=text;setMsg('Gagal: '+e.message)}
+ busy=false;
+}
+function showFix(f){
+ $('#fix').innerHTML=`<div class="card"><div class="mu">Kamu bilang</div><div class="bad">${esc(f.said)}</div><div class="mu" style="margin-top:8px">Lebih natural</div><div class="good">${esc(f.better)}</div><div class="mu">${esc(f.why||'')}</div><div class="row"><button id="rep">🔊 Dengar & ulangi</button><button class="pri" id="nx">Lanjut</button></div><div id="rs" class="mu" style="margin-top:8px"></div></div>`;
+ $('#rep').onclick=()=>repeatAfter(f.better,$('#rs'));
+ $('#nx').onclick=()=>{stopRec();$('#fix').innerHTML='';setAI(pending)};
+}
+function repeatAfter(t,el){
+ stopRec();el.textContent='Dengarkan…';
+ speak(t,()=>{el.textContent='Ulangi sekarang…';let heard='';
+  listen(x=>heard=x,()=>{el.textContent=heard?`Terdengar: "${heard}". Kemiripan ${sim(heard,t)}%`:'Tidak terdengar. Coba lagi.'})});
+}
+function addLog(said,better,why){
+ const L=LS.get('esc_log',[]),k=better.toLowerCase();
+ if(!L.some(x=>x.better.toLowerCase()===k))L.unshift({said,better,why});
+ LS.set('esc_log',L.slice(0,200));
+}
+async function how(){
+ const v=$('#idn').value.trim();if(!v||busy)return;
+ if(!cfg.key){tab('s');return setMsg('Isi API key dulu.')}
+ setMsg('Mencari kalimat…');
+ try{
+  const r=await gem(`The learner is in an ongoing English conversation about ${activeTopic}. Convert the Indonesian meaning into one short natural spoken English sentence at level ${cfg.level}. Also identify up to 3 useful vocabulary items. Return only JSON: {"english":"...","meaning":"...","vocabulary":[{"word":"...","meaning":"...","example":"..."}]}`,[{role:'user',parts:[{text:v}]}]);
+  setMsg('');lastHelpSentence=r.english;lastHelpWords=r.vocabulary||[];addLog(v,r.english,'Frasa baru');vocabLog(v,r.english,lastHelpWords);
+  const vocab=(r.vocabulary||[]).map(x=>`<div class="item"><b>${esc(x.word)}</b> = ${esc(x.meaning)}<div class="mu">${esc(x.example||'')}</div></div>`).join('');
+  $('#hw').innerHTML=`<div class="mu" style="margin-top:10px">You can say:</div><div class="good">${esc(r.english)}</div><div class="mu">${esc(r.meaning||v)}</div>${vocab?`<div style="margin-top:10px"><b>New vocabulary</b>${vocab}</div>`:''}<div class="row"><button id="hp">🔊 Dengarkan</button><button class="pri" id="hu">🎙️ Ulangi kalimat</button><button id="use">Gunakan sebagai jawaban</button></div><div id="hr" class="mu" style="margin-top:8px"></div>`;
+  $('#hp').onclick=()=>speak(r.english);$('#hu').onclick=()=>repeatAfter(r.english,$('#hr'));$('#use').onclick=()=>{$('#ans').value=r.english;$('#idn').value='';setMsg('Kalimat sudah dipindahkan ke jawaban. Ucapkan atau kirim untuk melanjutkan topik.')};
+ }catch(e){setMsg('Gagal: '+e.message)}
+}
+function renderLog(){
+ const st=LS.get('esc_st',{lat:[],n:0,fx:0}),l=st.lat;
+ const avg=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1)+' dtk':'–';
+ $('#stats').innerHTML=`<b>Progres</b><div class="mu">Jawaban terkirim: ${st.n} · koreksi: ${st.fx}</div><div class="mu">Jeda sebelum menjawab, 10 terakhir: <b>${avg(l.slice(-10))}</b> · 10 sebelumnya: ${avg(l.slice(-20,-10))}</div>`;
+ const V=LS.get('esc_vocab',[]);const L=LS.get('esc_log',[]);
+ $('#log').innerHTML=(V.length?`<div class="item"><b>Vocabulary tersimpan: ${V.length}</b>${V.slice(0,20).map(v=>`<div class="item"><span class="good">${esc(v.english)}</span><div class="mu">${esc(v.indonesian)}</div>${(v.words||[]).map(w=>`<div class="mu"><b>${esc(w.word)}</b> = ${esc(w.meaning)}</div>`).join('')}</div>`).join('')}</div>`:'')+(L.length?L.map((x,i)=>`<div class="item"><div class="good">${esc(x.better)}</div><div class="mu">${esc(x.said)}</div><div class="row"><button data-i="${i}" class="lt">🔊 Latih</button><button data-d="${i}" class="dl">Hapus</button></div><div class="mu" id="lr${i}"></div></div>`).join(''):'<div class="mu">Belum ada kalimat koreksi.</div>');
+ document.querySelectorAll('.lt').forEach(b=>b.onclick=()=>repeatAfter(L[b.dataset.i].better,$('#lr'+b.dataset.i)));
+ document.querySelectorAll('.dl').forEach(b=>b.onclick=()=>{L.splice(+b.dataset.d,1);LS.set('esc_log',L);renderLog()});
+}
+
+
+// ===== V3.1 HYBRID GEMINI LIVE ENGINE =====
+let appMode='guided',liveWs=null,liveMic=null,inputCtx=null,outputCtx=null,liveSrc=null,liveProc=null,liveGain=null;
+let liveAudioAt=0,liveSpeaking=false,livePaused=false,liveSources=[],liveUserText='',liveAIText='',lastLiveAI='';
+const liveModel=()=>($('#lm')?.value||'gemini-3.8-live').trim().replace(/^models\//,'');
+function pcm16(floatData){const out=new Int16Array(floatData.length);for(let i=0;i<floatData.length;i++){const v=Math.max(-1,Math.min(1,floatData[i]));out[i]=v<0?v*32768:v*32767}return out}
+function down16(input,rate){if(rate===16000)return input;const ratio=rate/16000,n=Math.max(1,Math.round(input.length/ratio)),out=new Float32Array(n);for(let i=0;i<n;i++){const a=Math.floor(i*ratio),b=Math.min(input.length,Math.floor((i+1)*ratio));let sum=0,c=0;for(let j=a;j<b;j++){sum+=input[j];c++}out[i]=c?sum/c:input[Math.min(a,input.length-1)]}return out}
+function rms(input){let x=0;for(let i=0;i<input.length;i++)x+=input[i]*input[i];return Math.sqrt(x/input.length)}
+function arrayB64(buf){const a=new Uint8Array(buf);let out='';for(let i=0;i<a.length;i+=32768)out+=String.fromCharCode(...a.subarray(i,i+32768));return btoa(out)}
+function playLiveAudio(data){if(!outputCtx)return;const bin=atob(data),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);const ints=new Int16Array(bytes.buffer),floats=new Float32Array(ints.length);for(let i=0;i<ints.length;i++)floats[i]=ints[i]/32768;const buf=outputCtx.createBuffer(1,floats.length,24000);buf.copyToChannel(floats,0);const node=outputCtx.createBufferSource();node.buffer=buf;node.connect(outputCtx.destination);const at=Math.max(liveAudioAt,outputCtx.currentTime+.04);node.start(at);liveAudioAt=at+buf.duration;liveSpeaking=true;liveSources.push(node);$('#liveStatus').textContent='🔊 AI speaking...';node.onended=()=>{liveSources=liveSources.filter(x=>x!==node);if(!liveSources.length&&outputCtx.currentTime>=liveAudioAt-.08){liveSpeaking=false;$('#liveStatus').textContent=livePaused?'⏸️ Microphone paused.':'🟢 Listening...'}}}
+function liveLevel(){const l=$('#quickLevel').value;if(l.startsWith('A1'))return 'The learner is CEFR A1-A2. Speak slowly with common words and short sentences.';if(l==='A2-B1')return 'The learner is CEFR A2-B1. Use clear everyday and workplace English.';return 'The learner is CEFR B1-B2. Use natural English and explain uncommon expressions.'}
+function liveSetupMessage(){const theme=$('#sc').selectedOptions[0]?.text||'',topic=$('#topic').selectedOptions[0]?.text||'';return {setup:{model:'models/'+liveModel(),generationConfig:{responseModalities:['AUDIO']},systemInstruction:{parts:[{text:`You are Wahyu's patient English communication coach. ${liveLevel()} Theme: ${theme}. Topic: ${topic}. Ask exactly one question at a time and stop. Wait through thinking pauses. If an answer has one important grammar or word-choice error, do not ask a new question. Say: Good try. A better sentence is: [correct sentence]. Please say it again. Wait for the repetition; after it is correct or close enough, praise briefly and ask exactly one next question. If the learner uses Indonesian to ask how to say something, teach one natural English sentence, explain up to three useful vocabulary items briefly, ask the learner to repeat the English sentence, then continue the same conversation. Never answer for the learner.`}]},realtimeInputConfig:{automaticActivityDetection:{disabled:false,startOfSpeechSensitivity:'START_SENSITIVITY_HIGH',endOfSpeechSensitivity:'END_SENSITIVITY_LOW',prefixPaddingMs:300,silenceDurationMs:4000}},inputAudioTranscription:{},outputAudioTranscription:{}}}}
+async function startGeminiLive(){if(!cfg.key){tab('s');return setMsg('Isi dan simpan API key dulu.')}if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia)return setMsg('Live Voice membutuhkan HTTPS dan Chrome.');try{$('#startLive').disabled=true;$('#liveStatus').textContent='🎤 Activating microphone...';liveMic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});const AC=window.AudioContext||window.webkitAudioContext;inputCtx=new AC();outputCtx=new AC({sampleRate:24000});await inputCtx.resume();await outputCtx.resume();liveWs=new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${encodeURIComponent(cfg.key)}`);liveWs.onopen=()=>{$('#liveStatus').textContent='🔗 Connected to Gemini. Starting session...';liveWs.send(JSON.stringify(liveSetupMessage()))};liveWs.onmessage=async e=>{let m;try{let raw=e.data;if(raw instanceof Blob)raw=await raw.text();else if(raw instanceof ArrayBuffer)raw=new TextDecoder().decode(raw);m=JSON.parse(raw)}catch(err){return}if(m.setupComplete){$('#stopLive').disabled=false;$('#liveStatus').textContent=`🟢 Listening. Mic ${inputCtx.sampleRate} Hz → 16000 Hz`;liveAudioAt=outputCtx.currentTime;liveSpeaking=false;liveUserText='';liveAIText='';liveSrc=inputCtx.createMediaStreamSource(liveMic);liveProc=inputCtx.createScriptProcessor(4096,1,1);liveGain=inputCtx.createGain();liveGain.gain.value=0;liveProc.onaudioprocess=x=>{if(liveWs?.readyState===1&&!liveSpeaking&&!livePaused){const raw=x.inputBuffer.getChannelData(0),level=rms(raw),res=down16(raw,inputCtx.sampleRate),data=pcm16(res);liveWs.send(JSON.stringify({realtimeInput:{audio:{data:arrayB64(data.buffer),mimeType:'audio/pcm;rate=16000'}}}));if(level>.012)$('#liveStatus').textContent='🎤 Hearing you...'}};liveSrc.connect(liveProc);liveProc.connect(liveGain);liveGain.connect(inputCtx.destination);return}if(m.error){$('#liveStatus').textContent='❌ '+(m.error.message||'Live API error');return}const c=m.serverContent;if(!c)return;if(c.inputTranscription?.text)liveUserText+=c.inputTranscription.text;if(c.outputTranscription?.text)liveAIText+=c.outputTranscription.text;for(const part of (c.modelTurn?.parts||[])) if(part.inlineData?.data)playLiveAudio(part.inlineData.data);if(c.turnComplete){const u=liveUserText.trim(),a=liveAIText.trim();if(a){lastLiveAI=a;lastAI=a}$('#liveTranscript').innerHTML=`${u?`<div><b>You:</b> ${esc(u)}</div>`:''}${a?`<div><b>AI:</b> ${esc(a)}</div>`:''}`;liveUserText='';liveAIText='';if(!liveSpeaking)$('#liveStatus').textContent='🟢 Listening...'}};liveWs.onerror=()=>$('#liveStatus').textContent='❌ Live connection error.';liveWs.onclose=e=>{$('#liveStatus').textContent=`⚪ Closed (${e.code}) ${e.reason||''}`;$('#startLive').disabled=false;$('#stopLive').disabled=true}}catch(e){stopGeminiLive();$('#liveStatus').textContent='❌ '+e.message}}
+function stopGeminiLive(){try{liveSources.forEach(n=>{try{n.stop()}catch{}});liveProc?.disconnect();liveSrc?.disconnect();liveGain?.disconnect()}catch{}liveSources=[];liveMic?.getTracks().forEach(t=>t.stop());liveMic=null;try{inputCtx?.close();outputCtx?.close();liveWs?.close()}catch{}inputCtx=outputCtx=liveWs=null;liveSpeaking=false;livePaused=false;$('#startLive').disabled=false;$('#stopLive').disabled=true;$('#pauseMic').textContent='⏸️ Pause mic';$('#liveStatus').textContent='⚪ Not connected.'}
+function setAppMode(next){appMode=next;const live=next==='live';$('#guidedMode').classList.toggle('on',!live);$('#liveMode').classList.toggle('on',live);$('#livePanel').hidden=!live;$('#ai').hidden=live?true:$('#ai').hidden;$('#ac').hidden=live?true:$('#ac').hidden;if(live){setMsg('Live mode aktif. Tekan Start Live.')}else{stopGeminiLive();setMsg('Guided Practice aktif.')}}
+$('#guidedMode').onclick=()=>setAppMode('guided');$('#liveMode').onclick=()=>setAppMode('live');$('#startLive').onclick=startGeminiLive;$('#stopLive').onclick=stopGeminiLive;$('#pauseMic').onclick=()=>{livePaused=!livePaused;$('#pauseMic').textContent=livePaused?'▶️ Resume mic':'⏸️ Pause mic';$('#liveStatus').textContent=livePaused?'⏸️ Microphone paused.':'🟢 Listening...'};$('#liveSlow').onclick=()=>{if(lastLiveAI){const u=new SpeechSynthesisUtterance(lastLiveAI);u.lang='en-US';u.rate=.65;speechSynthesis.cancel();speechSynthesis.speak(u)}};$('#liveMeaning').onclick=async()=>{if(!lastLiveAI)return setMsg('Belum ada kalimat AI.');try{const r=await gem('Translate into simple natural Indonesian. Return only JSON: {"meaning":"..."}',[{role:'user',parts:[{text:lastLiveAI}]}]);setMsg('Arti: '+r.meaning)}catch(e){setMsg('Gagal: '+e.message)}};
+
+$('#sc').onchange=fillTopics;$('#topic').onchange=()=>activeTopic=$('#topic').selectedOptions[0]?.text||'';$('#quickLevel').onchange=()=>{cfg.level=$('#quickLevel').value;$('#lv').value=cfg.level;$('#quickLevel').value=cfg.level;LS.set('esc_cfg',cfg)};
+$('#meaning').onclick=async()=>{if(!lastAI)return setMsg('Belum ada pertanyaan AI.');if(!cfg.key){tab('s');return setMsg('Isi API key dulu.')}setMsg('Menerjemahkan...');try{const r=await gem('Translate the English sentence into simple natural Indonesian. Return only JSON: {"meaning":"..."}',[{role:'user',parts:[{text:lastAI}]}]);setMsg('Arti: '+r.meaning)}catch(e){setMsg('Gagal: '+e.message)}};
+$('#slow').onclick=()=>{if(lastAI){const u=new SpeechSynthesisUtterance(lastAI);u.lang='en-US';u.rate=.65;speechSynthesis.cancel();speechSynthesis.speak(u)}};
+fillTopics();$('#quickLevel').value=cfg.level;
+$('#go').onclick=()=>appMode==='live'?startGeminiLive():start();
+$('#snd').onclick=send;
+$('#how').onclick=how;
+$('#idn').onkeydown=e=>{if(e.key==='Enter')how()};
+$('#ans').oninput=markLat;
+$('#ans').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
+$('#mic').onclick=()=>{if(rec){stopRec()}else{if('speechSynthesis' in window)speechSynthesis.cancel();micOn()}};
+$('#rp').onclick=()=>{if(lastAI){stopRec();speak(lastAI,startTurn)}};
+$('#shw').onclick=()=>{$('#aitx').textContent=lastAI};
+$('#sv').onclick=()=>{
+ cfg={key:$('#k').value.trim(),model:$('#m').value.trim()||'gemini-3.8-flash',liveModel:$('#lm').value.trim()||'gemini-3.8-live',level:$('#lv').value,hide:$('#hd').checked};
+ LS.set('esc_cfg',cfg);$('#quickLevel').value=cfg.level;setMsg('Tersimpan.');tab('p');
+};
+$('#k').value=cfg.key;$('#m').value=cfg.model;$('#lm').value=cfg.liveModel||'gemini-3.8-live';$('#lv').value=cfg.level;$('#quickLevel').value=cfg.level;$('#hd').checked=cfg.hide;
+window.addEventListener('beforeunload',stopGeminiLive);
+</script>
+</body>
+</html>
